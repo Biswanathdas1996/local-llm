@@ -10,8 +10,8 @@ from langchain.callbacks.streaming_stdout import (
 
 
 
-def getResponse():
-    model_path = "./models/mistral-7b-openorca.Q4_0.gguf" 
+def getResponse(question):
+    model_path = "./models/mistral-7b-openorca.Q2_K.gguf" 
     template = """Question: {question}
     Answer: """
     prompt = PromptTemplate(template=template, input_variables=["question"])
@@ -25,10 +25,11 @@ def getResponse():
         n_batch=n_batch,
         callback_manager=callback_manager,
         verbose=True,
-        # temperature=0.6
+        temperature=0.1
     )
     llm_chain = LLMChain(prompt=prompt, llm=llm)
-    question = "World largest forest?"
+
+  
     print(llm_chain.run(question))
     return llm_chain.run(question)
 
@@ -37,12 +38,16 @@ def getResponse():
 app = Flask(__name__)
 
 # Define API endpoints
-@app.route('/ask', methods=['GET'])
+@app.route('/ask', methods=['POST'])
 def get_todos():
-    return jsonify(getResponse())
+    question = request.json.get("prompt")
+    return jsonify({
+        "prompt":question,
+        "result":getResponse(question)
+    })
 
 
 
 # Start server
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
